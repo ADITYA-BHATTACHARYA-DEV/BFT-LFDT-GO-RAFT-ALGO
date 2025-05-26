@@ -27,7 +27,7 @@ An interactive visualization of the Raft consensus algorithm implemented in Go w
 - [Implementation Details](#implementation-details)
   - [Raft Components](#raft-components)
   - [Key Functions](#key-functions)
-- [Interactions](#interactions)
+- [Safety Implementation](#safety-properties-implementation)
   - [Normal Operation](#normal-operation)
   - [Failure Scenarios](#failure-scenarios)
 - [License](#license)
@@ -349,7 +349,14 @@ func (n *Node) applyLogs() {
 
 - Idempotent application (can survive crashes)
 
+</br>
+</br>
 
+![server-states-l](https://github.com/user-attachments/assets/5cba9ef4-f59a-44c2-842c-3c1f1d493f02)
+
+
+
+</br>
 ## Optimization Details
 
 - **Batching:** The implementation could batch multiple log entries in single AppendEntries RPCs but currently sends entries individually.
