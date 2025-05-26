@@ -73,7 +73,7 @@ The visualization uses a terminal UI built with `tview` to show real-time status
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/BFT-LFDT-GO-RAFT-ALGO.git
-cd raft-visualization
+cd BFT-LFDT-GO-RAFT-ALGO
 
 # Install dependencies
 go get github.com/gdamore/tcell/v2
