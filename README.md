@@ -26,6 +26,7 @@ An interactive visualization of the Raft consensus algorithm implemented in Go w
   - [Leader Election Phase](#leader-election-phase)
 
 - [Safety Implementation](#safety-properties-implementation)
+- [Core Logic & Processes](#core-logic-&-processes)
  
 -  [Working Sample](#working-sample)
   - [ScreenShots](#screenshots)
@@ -357,6 +358,7 @@ func (n *Node) applyLogs() {
 
 
 </br>
+
 ## Optimization Details
 
 - **Batching:** The implementation could batch multiple log entries in single AppendEntries RPCs but currently sends entries individually.
@@ -364,6 +366,234 @@ func (n *Node) applyLogs() {
 - **Pipelining:** The code implicitly pipelines requests by not waiting for previous RPCs to complete before sending new ones.
 
 - **Transport Efficiency:** Heartbeats are empty AppendEntries RPCs, minimizing bandwidth when idle.
+
+
+
+
+
+</br>
+</br>
+
+## Core Logic & Processes
+### 🧠 Consensus Mechanism (Log Replication)
+**Goal:** Ensure that all nodes agree on the same sequence of commands (log entries).
+
+**How it works in your code:**
+Client submits command:
+
+
+
+```bash
+node.SubmitCommand(command)
+```
+- Only the leader accepts commands (if n.state != Leader || n.crashed { return }).
+
+- Appends a LogEntry to the leader's local log:
+
+
+```bash
+n.log = append(n.log, LogEntry{Term: n.currentTerm, Command: cmd})
+```
+#### Leader broadcasts to followers:
+
+```bash
+n.broadcastAppendEntries()
+```
+#### Sends AppendEntriesArgs to all peers:
+
+
+``` bash
+entries := n.log[nextIndex:]
+```
+#### Followers validate and append:
+
+
+```bash
+func (n *Node) HandleAppendEntries(...)
+```
+- If log doesn't match at PrevLogIndex, reject (enforcing consistency).
+
+- If terms match, append new entries:
+
+
+```bash
+n.log = append(n.log, entry)
+```
+- Commit & Apply:
+
+- Once the leader knows a log entry is replicated on a majority, it commits:
+
+
+```bash
+n.updateCommitIndex()
+```
+- Then, each node applies the entry:
+
+```bash
+n.applyLogs()
+```
+### 📌 This mechanism ensures that all non-faulty nodes eventually agree on the same ordered list of commands.
+
+## 🔐 Fault Tolerance: Crashes & Message Drops
+### Goal: System keeps working despite node crashes or communication issues.
+
+- **Crashes**
+- Nodes can be crashed manually with keys 0–4:
+
+```bash
+node.crashed = !node.crashed
+```
+- Crashed nodes:
+
+- Do not process elections, RPCs, or timers.
+
+- Skip logic in HandleRequestVote, HandleAppendEntries, etc.:
+
+
+```bash
+if n.crashed {
+    return
+}
+```
+- Recovering from crash
+- When revived (!node.crashed), the node resumes normal operation:
+
+
+```bash
+node.resetElectionTimer()
+if node.state == Leader {
+    node.startHeartbeats()
+}
+```
+- Message drops
+- Simulated indirectly via network partitions (below).
+
+## 🔌 Network Partitions, Retries, and Quorum Logic
+### Network Partitions
+### Goal: Test how the system behaves when communication between some nodes is cut.
+
+- You simulate partitions using keyboard input: pXY
+
+```bash
+nodes[a].networkPartitioned[b] = true
+```
+- This marks nodes as unable to communicate:
+
+- **In startElection:**
+
+```bash
+if n.networkPartitioned[peer.ID] { continue }
+```
+- **In broadcastAppendEntries:**
+
+```bash
+if n.networkPartitioned[p.ID] { return }
+```
+### Effect:
+
+- Partitioned nodes can't vote or replicate logs.
+
+- Leader may lose quorum and be unable to commit new commands.
+
+## Raft ensures safety (no split-brain), even during partitions.
+
+### Retries (in Log Replication)
+- If a follower rejects AppendEntries (log mismatch):
+
+```bash
+if !reply.Success {
+    if n.nextIndex[p.ID] > 0 {
+        n.nextIndex[p.ID]-- // Decrement nextIndex and retry
+    }
+}
+```
+- This retry loop ensures the leader backs up to the matching log index and reattempts replication until success.
+
+## Quorum Logic
+### Quorum = majority(n):
+
+```bash
+func majority(n int) int {
+    return (n / 2) + 1
+}
+```
+### Used in:
+
+- Elections: Candidate wins if it gets a majority of votes:
+
+
+```bash
+if votes >= majority(len(n.peers)+1) { ... }
+```
+### Commitment: Leader only commits if a log entry is replicated on a majority:
+
+
+```bash
+if count >= majority(len(n.peers)+1) { ... }
+```
+### This ensures:
+
+- Fault tolerance (can handle up to ⌊n/2⌋ failures).
+
+- Linearizability (all committed entries are consistent).
+
+## 📺 Output: Leader Changes, Agreement Steps, State Updates
+### Leader Changes
+#### Tracked via:
+```bash
+n.state == Leader transition in becomeLeader():
+```
+
+
+```bash
+n.state = Leader
+fmt.Printf("Node %d became leader in term %d\n", n.ID, n.currentTerm)
+```
+
+### Agreement Steps (Log Commit)
+```bash
+In applyLogs():
+```
+
+```bash
+fmt.Printf("Node %d applied command: %v\n", n.ID, entry.Command)
+```
+### Shows which commands were committed and by which node.
+
+## UI Updates
+- Every 300ms, the UI updates node state:
+
+
+```bash
+table.SetCell(..., state)
+```
+## Shows:
+
+
+- Node state (Follower/Candidate/Leader)
+
+- Term
+
+- Commit index
+
+- Log length
+
+- Leader ID
+
+- Crash status (Up/Down)
+
+- Partitioned peers
+
+
+</br>
+
+
+### User Input Controls
+- **Crash node:** keys 0–4
+
+- **Partition nodes:** pXY (e.g., p13)
+
+- **Submit command to leader:** type and press Enter
 
 ## Working Sample
 
