@@ -55,7 +55,7 @@ The visualization uses a terminal UI built with `tview` to show real-time status
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/raft-visualization.git
+git clone https://github.com/yourusername/BFT-LFDT-GO-RAFT-ALGO.git
 cd raft-visualization
 
 # Install dependencies
