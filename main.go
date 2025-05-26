@@ -330,9 +330,6 @@ func (n *Node) broadcastAppendEntries() {
 				Entries:      entries,
 				LeaderCommit: n.commitIndex,
 			}
-			if len(entries) == 0 {
-				fmt.Printf("Leader %d sending heartbeat to Node %d (Term: %d, CommitIndex: %d)\n", n.ID, p.ID, n.currentTerm, n.commitIndex)
-			}
 
 			n.mu.Unlock()
 
