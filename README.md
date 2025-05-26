@@ -21,16 +21,16 @@ An interactive visualization of the Raft consensus algorithm implemented in Go w
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-- [Usage](#usage)
-  - [Keyboard Controls](#keyboard-controls)
-  - [UI Elements](#ui-elements)
-- [Implementation Details](#implementation-details)
-  - [Raft Components](#raft-components)
-  - [Key Functions](#key-functions)
+- [Detailed Analysis of Raft Algorithm Implementation](#detailed-analysis-of-raft-algorithm-implementation)
+  - [Core Raft Components](#core-raft-components)
+  - [Leader Election Phase](#leader-election-phase)
+
 - [Safety Implementation](#safety-properties-implementation)
-  - [Normal Operation](#normal-operation)
-  - [Failure Scenarios](#failure-scenarios)
-- [License](#license)
+ 
+-  [Working Sample](#working-sample)
+  - [ScreenShots](#screenshots)
+  - [Live Demo Video](#live-demo-video)
+
 
 ## Overview
 
