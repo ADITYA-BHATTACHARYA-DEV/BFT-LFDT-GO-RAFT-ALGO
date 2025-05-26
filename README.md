@@ -88,7 +88,7 @@ go run main.go
 ### Core Raft Components
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ad574ba7-30bb-4da4-9261-fa6895bb4cdc" height="400" width="600" />
+  <img src="https://github.com/user-attachments/assets/ad574ba7-30bb-4da4-9261-fa6895bb4cdc" height="600" width="600" />
 </p>
 
 
