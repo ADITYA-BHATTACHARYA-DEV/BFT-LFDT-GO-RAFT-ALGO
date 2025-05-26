@@ -88,7 +88,7 @@ go run main.go
 ### Core Raft Components
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ad574ba7-30bb-4da4-9261-fa6895bb4cdc" height="600" width="600" />
+  <img src="https://github.com/user-attachments/assets/ad574ba7-30bb-4da4-9261-fa6895bb4cdc" height="600" width="700" />
 </p>
 
 
@@ -177,3 +177,208 @@ func (n *Node) broadcastAppendEntries() {
 - **Consistency:** Overwrites conflicting entries
 - **Commit Tracking:** Only advances after majority replication
 - **Safety:** Never commits entries from previous terms
+
+  </br>
+  </br>
+
+
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/6f5a56b3-0cb1-4e32-9e06-4d6f9d1534bf" height="3800" width="400" />
+</p>
+
+
+  
+
+
+
+## Leader Election Phase
+### 1.Follower Timeout:
+
+- Each node runs resetElectionTimer() with random duration
+
+- On timeout, transitions to Candidate via startElection()
+
+### 2.Vote Request:
+
+- Candidate increments term and votes for itself
+
+- Sends **_RequestVote_** RPCs to all peers
+
+- Includes last log index/term for completeness check
+
+### 3.Vote Collection:
+
+- Peers validate candidate's log is up-to-date
+
+- Grant vote if haven't voted this term
+
+- Candidate becomes Leader on majority votes
+
+### Normal Operation (Leader Active)
+#### 1.Heartbeat Mechanism:
+
+- Leader runs startHeartbeats() with 50ms interval
+
+- Empty AppendEntries as heartbeat
+
+- Maintains authority and detects failures
+
+#### 2.Command Processing:
+
+```bash
+func (n *Node) SubmitCommand(cmd interface{}) {
+    n.log = append(n.log, LogEntry{
+        Term:    n.currentTerm,
+        Command: cmd,
+    })
+    n.broadcastAppendEntries()
+}
+```
+- Client commands appended to leader's log
+- Immediately replicated to followers
+- Committed after majority acknowledgement
+
+#### 3.Commit Propagation:
+- Leader tracks **nextIndex** and **matchIndex **per follower
+
+- Updates **commitIndex** via **updateCommitIndex()**
+
+- Followers apply committed entries through **applyLogs()**
+
+### Failure Handling
+
+#### 1.Leader Crash Detection
+
+- Followers timeout waiting for heartbeats
+
+- Transition to Candidate and start new election
+
+- Higher term prevents split-brain scenarios
+
+</br>
+</br>
+
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f4e495f6-558d-445d-98ed-36bc12ae91ad" height="600" width="600" />
+</p>
+
+
+
+</br>
+
+### 2.Network Partitions:
+
+
+```bash
+nodes[a].networkPartitioned[b] = true
+nodes[b].networkPartitioned[a] = true
+```
+- Partitioned leader cannot commit entries
+
+- Partition with majority elects new leader
+
+- Recovered partitions reconcile via RPC term checks
+
+### 3.Log Reconciliation:
+
+- Followers truncate logs on inconsistency
+
+- Leader decrements nextIndex on failure
+
+- Eventually finds matching log point
+
+
+## Safety Properties Implementation
+
+### Election Safety
+
+```bash
+
+func (n *Node) HandleRequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
+    if args.Term > n.currentTerm {
+        n.stepDown(args.Term)
+    }
+    // Additional checks...
+}
+```
+- At most one leader per term (via term comparisons)
+
+- Only up-to-date nodes can become leaders (isLogUpToDate() check)
+
+### Log Safety
+
+```bash
+func (n *Node) updateCommitIndex() {
+    for N := len(n.log) - 1; N > n.commitIndex; N-- {
+        if n.log[N].Term != n.currentTerm {
+            continue // Only commit current term entries
+        }
+        // Majority check...
+    }
+}
+
+```
+- Never overwrite committed entries
+
+- Only leader's current term entries committed directly
+
+- Previous term entries committed indirectly
+
+### State Machine Safely
+
+```bash
+
+func (n *Node) applyLogs() {
+    for n.lastApplied < n.commitIndex {
+        n.lastApplied++
+        entry := n.log[n.lastApplied]
+        n.applyCh <- ApplyMsg{
+            CommandValid: true,
+            Command:      entry.Command,
+            CommandIndex: n.lastApplied,
+        }
+    }
+}
+```
+
+- Applies entries in order
+
+- Only applies committed entries
+
+- Idempotent application (can survive crashes)
+
+
+## Optimization Details
+
+- **Batching:** The implementation could batch multiple log entries in single AppendEntries RPCs but currently sends entries individually.
+
+- **Pipelining:** The code implicitly pipelines requests by not waiting for previous RPCs to complete before sending new ones.
+
+- **Transport Efficiency:** Heartbeats are empty AppendEntries RPCs, minimizing bandwidth when idle.
+
+## Working Sample
+
+### ScreenShots 
+
+![Screenshot 2025-05-26 180138](https://github.com/user-attachments/assets/cfd8547d-0101-4abd-96b3-6c6e8e7d9502)
+
+</br>
+</br>
+
+
+![Screenshot 2025-05-26 175927](https://github.com/user-attachments/assets/824883f7-c3d9-4a0c-8893-67861efeb4e3)
+
+
+</br>
+</br>
+
+### Live Demo Video:
+
+
+
+
+https://github.com/user-attachments/assets/8cc2d881-c795-4aae-b95d-a4f8c82d159c
+
+
