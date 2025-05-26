@@ -1,6 +1,17 @@
-# Raft Consensus Algorithm Visualization
+# Consensus Algorithm in GoLang, inspired by Raft - Reliable, Replicated, And Fault-Tolerant (CFT or Crash Fault Tolerance)  
 
 ![Raft Visualization Demo](https://github.com/yourusername/raft-visualization/raw/main/demo.gif)
+
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/93584dbe-1848-4b6b-98a5-fc99d1f05d36" height="200" width="200" />
+</p>
+
+
+
+
+
+
 
 An interactive visualization of the Raft consensus algorithm implemented in Go with terminal UI.
 
@@ -44,6 +55,11 @@ The visualization uses a terminal UI built with `tview` to show real-time status
 - Color-coded status display
 - Detailed logging of Raft operations
 
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8f05b963-5adb-4c54-95d6-b48e7f775464" height="200" width="200" />
+</p>
+
 ## Getting Started
 
 ### Prerequisites
@@ -71,6 +87,13 @@ go run main.go
 
 ### Core Raft Components
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ad574ba7-30bb-4da4-9261-fa6895bb4cdc" height="400" width="600" />
+</p>
+
+
+
+
 #### 1. Node States and Transitions
 The code implements all three Raft states with clear transitions:
 
@@ -90,6 +113,10 @@ const (
 - Leaders revert to Followers if they discover higher terms
 
 #### 2. Election 
+
+
+
+![1 1](https://github.com/user-attachments/assets/9b16b7e4-604e-45cf-a996-d67b1eed35ee)
 
 The election system implements all key Raft requirements:
 
