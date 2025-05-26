@@ -64,3 +64,89 @@ go get github.com/rivo/tview
 
 # Run the visualization
 go run main.go
+
+```
+
+## Detailed Analysis of Raft Algorithm Implementation
+
+### Core Raft Components
+
+#### 1. Node States and Transitions
+The code implements all three Raft states with clear transitions:
+
+```bash
+type NodeState int
+const (
+    Follower NodeState = iota  // Initial state
+    Candidate                  // Transition during elections
+    Leader                     // Active state managing cluster
+)
+
+```
+##### State Machine Logic:
+- All nodes start as Followers
+- Followers become Candidates after election timeout
+- Candidates become Leaders if they receive majority votes
+- Leaders revert to Followers if they discover higher terms
+
+#### 2. Election 
+
+The election system implements all key Raft requirements:
+
+```bash
+func (n *Node) startElection() {
+    n.state = Candidate
+    n.currentTerm++
+    n.votedFor = n.ID
+    votes := 1
+    
+    args := RequestVoteArgs{
+        Term:         n.currentTerm,
+        CandidateID:  n.ID,
+        LastLogIndex: lastLogIndex,
+        LastLogTerm:  lastLogTerm,
+    }
+    // Request votes from peers...
+}
+```
+
+##### Key Election Features:
+- **Randomized Timeouts**: 300-600ms range prevents split votes
+- **Term Incrementation:** Ensures monotonic term progression
+- **Vote Counting:** Tracks votes received across peers
+- **Log Completeness Check:** isLogUpToDate() enforces up-to-date log requirement
+
+
+
+
+#### 3. Log Replication System
+
+The log replication implements the full Raft spec:
+
+```bash
+type LogEntry struct {
+    Term    int
+    Command interface{}
+}
+
+func (n *Node) broadcastAppendEntries() {
+    // For each peer, send:
+    args := AppendEntriesArgs{
+        Term:         n.currentTerm,
+        LeaderID:     n.ID,
+        PrevLogIndex: prevLogIndex,
+        PrevLogTerm:  prevLogTerm,
+        Entries:      entries,
+        LeaderCommit: n.commitIndex,
+    }
+    // Send to followers...
+}
+```
+
+##### Replication Guarantees:
+
+
+- **Log Matching:** Checks PrevLogIndex and PrevLogTerm
+- **Consistency:** Overwrites conflicting entries
+- **Commit Tracking:** Only advances after majority replication
+- **Safety:** Never commits entries from previous terms
