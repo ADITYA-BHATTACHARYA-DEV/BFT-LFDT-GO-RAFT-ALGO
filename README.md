@@ -241,7 +241,7 @@ func (n *Node) SubmitCommand(cmd interface{}) {
 - Committed after majority acknowledgement
 
 #### 3.Commit Propagation:
-- Leader tracks **nextIndex** and **matchIndex **per follower
+- Leader tracks **nextIndex** and **matchIndex**per follower
 
 - Updates **commitIndex** via **updateCommitIndex()**
 
