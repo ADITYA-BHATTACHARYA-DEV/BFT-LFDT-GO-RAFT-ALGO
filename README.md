@@ -378,7 +378,7 @@ func (n *Node) applyLogs() {
 ### 🧠 Consensus Mechanism (Log Replication)
 **Goal:** Ensure that all nodes agree on the same sequence of commands (log entries).
 
-**How it works in your code:**
+**How it works in the code:**
 Client submits command:
 
 
@@ -472,7 +472,7 @@ if node.state == Leader {
 ### Network Partitions
 ### Goal: Test how the system behaves when communication between some nodes is cut.
 
-- You simulate partitions using keyboard input: pXY
+- Simulate partitions using keyboard input: pXY
 
 ```bash
 nodes[a].networkPartitioned[b] = true
